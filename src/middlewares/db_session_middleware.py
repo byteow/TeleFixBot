@@ -7,7 +7,6 @@ class DatabaseSessionMiddleware(BaseMiddleware):
     def __init__(self):
         ...
 
-
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],

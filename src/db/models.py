@@ -16,7 +16,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), default=timestamp)
     updated_at = Column(DateTime(timezone=True), default=timestamp, onupdate=timestamp)
 
-    server = relationship("Server", back_populates="user")
+    server = relationship("Server", back_populates="users")
 
 class Server(Base):
     __tablename__ = "servers"

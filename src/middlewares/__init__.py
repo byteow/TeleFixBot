@@ -1,1 +1,2 @@
 from .db_session_middleware import DatabaseSessionMiddleware
+from .registration_middleware import RegistrationMiddleware
