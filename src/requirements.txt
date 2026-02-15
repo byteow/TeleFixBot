@@ -1,0 +1,11 @@
+requests
+asyncpg
+aiogram
+python-decouple
+sqlalchemy
+psycopg-binary
+alembic
+aiosend
+celery[redis]
+httpx
+httpx[http2]

@@ -1,0 +1,34 @@
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Byte-code files
+__pycache__/
+*.py[cod]
+
+# Editor/OS temporary files
+.idea/  # For PyCharm users
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Project-specific files and directories to ignore
+*.log
+*.sqlite
+*.sqlite3
+/db*.sqlite
+/db*.sqlite3
+
+# Specific build/dist files
+dist/
+build/
+*.egg-info/
+
+# Configuration/Secrets files (Crucial for security)
+.env  # Environment variable file containing the bot token
+my_credentials.py # Or whatever file name you use for credentials
+secrets.py
+alembic.ini
+.env
+versions/
