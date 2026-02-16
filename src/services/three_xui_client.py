@@ -4,12 +4,14 @@ import uuid
 from datetime import datetime
 from db import Server
 from dataclasses import dataclass
+from utils import get_now_ms
 
 @dataclass
 class SubscribeInfo:
     id: int
     inboundId: int
     enable: bool
+    active: bool
     email: str
     up: int
     down: int
@@ -75,6 +77,7 @@ class ThreeXUIClient:
                     up=obj['up'],
                     down=obj['down'],
                     expiryTime=obj['expiryTime'],
+                    active=obj['enable'] and (obj['expiryTime'] == 0 or obj['expiryTime'] > get_now_ms()),
                     total=obj['total'],
                     reset=obj['reset']
                 )
@@ -114,6 +117,72 @@ class ThreeXUIClient:
             return uuid_
         except Exception:
             return None
+        
+    
+    async def extend_client_subscription(self, client_uuid: str, sub: SubscribeInfo, add_days: int):
+        try:
+            if not sub:
+                return await self.add_client(0, add_days)
+
+            now_ms = int(datetime.utcnow().timestamp() * 1000)
+  
+            base_time = max(sub.expiryTime, now_ms)
+            new_expiry = base_time + (add_days * 86400 * 1000)
+
+            client_settings = {
+                "id": client_uuid,
+                "alterId": 0,
+                "email": sub.email,
+                "limitIp": 0,
+                "totalGB": sub.total,
+                "expiryTime": new_expiry,
+                "enable": True,
+                "tgId": "",
+                "subId": ""
+            }
+
+            params = {
+                "id": self.data["inbound_id"],
+                "settings": json.dumps({"clients": [client_settings]})
+            }
+
+            response = await self.client.post(
+                f"{self.base_url}/panel/api/inbounds/updateClient/{client_uuid}",
+                json=params,
+                cookies=self.cookie
+            )
+            return response.json().get("success", False)
+        except Exception:
+            return False
+        
+    
+    async def toggle_client_status(self, client_uuid: str, sub: SubscribeInfo, enable: bool):
+        try:
+            client_settings = {
+                "id": client_uuid,
+                "alterId": 0,
+                "email": sub.email,
+                "limitIp": 0,
+                "totalGB": sub.total,
+                "expiryTime": sub.expiryTime,
+                "enable": enable,
+                "tgId": "",
+                "subId": ""
+            }
+
+            params = {
+                "id": self.data["inbound_id"],
+                "settings": json.dumps({"clients": [client_settings]})
+            }
+
+            response = await self.client.post(
+                f"{self.base_url}/panel/api/inbounds/updateClient/{client_uuid}",
+                json=params,
+                cookies=self.cookie
+            )
+            return response.json().get("success", False)
+        except Exception:
+            return False
 
 
     async def delete_client(self, uuid: str):

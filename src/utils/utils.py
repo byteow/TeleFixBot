@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from services import SubscribeInfo
 
 def get_utc_time(datetime: datetime):
     return datetime.strftime("%d %b %Y, %H:%M UTC")
@@ -27,3 +26,9 @@ def generate_vless_link(server_data: dict, uuid: str):
     remark = "Access_Granted" 
     
     return f"vless://{uuid}@{host}:{port}?{params_str}#{remark}"
+
+def bytes_to_gb(b):
+    return round(b / (1024**3), 2)
+
+def get_now_ms():
+    return int(datetime.utcnow().timestamp() * 1000)

@@ -1,6 +1,6 @@
 import asyncio
 from create_bot import dp, bot, set_servers
-from routers import start_router
+from routers import user_router, admin_router
 from middlewares import DatabaseSessionMiddleware, RegistrationMiddleware
 
 async def main():
@@ -8,7 +8,8 @@ async def main():
 
     dp.update.outer_middleware(DatabaseSessionMiddleware())
     dp.update.outer_middleware(RegistrationMiddleware())
-    dp.include_router(start_router)
+    dp.include_router(user_router)
+    dp.include_router(admin_router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
