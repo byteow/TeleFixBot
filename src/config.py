@@ -3,3 +3,4 @@ from decouple import config
 API_TOKEN = config('API_TOKEN', cast=str)
 PG_URI = config('PG_URI', cast=str)
 ADMIN_USERNAME = config('ADMIN_USERNAME', cast=str)
+ADMINS = [int(id) for id in config("ADMINS_IDS", cast=str).split(",")]
