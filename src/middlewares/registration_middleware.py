@@ -4,6 +4,9 @@ from aiogram.types import TelegramObject
 from db import get_user_by_tg_id, create_user
 from services import ThreeXUIClient
 from create_bot import get_random_server, three_xui_clients
+from cachetools import TTLCache
+
+stats_cache = TTLCache(maxsize=1000, ttl=300)
 
 class RegistrationMiddleware(BaseMiddleware):
     async def __call__(
@@ -29,7 +32,7 @@ class RegistrationMiddleware(BaseMiddleware):
 
             if server:
                 server_id = server.data["server_id"]
-                uuid = await server.add_client(0, 1)
+                uuid = await server.add_client(user_id, 0, 1)
 
             user = await create_user(
                 session,
@@ -41,7 +44,11 @@ class RegistrationMiddleware(BaseMiddleware):
             is_reg = True
 
         server = three_xui_clients[user.server_id]
-        sub_info = await server.get_client_stats(user.uuid)
+        if user_id in stats_cache:
+            sub_info = stats_cache[user_id]
+        else:
+            sub_info = await server.get_client_stats(user.telegram_id)
+            stats_cache[user_id] = sub_info
 
         data['user'] = user
         data['is_reg'] = is_reg

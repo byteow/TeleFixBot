@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import bytes_to_gb, ms_to_datetime
-from db import get_user_by_tg_id, update_user_uuid
+from db import get_user_by_tg_id, update_user_uuid, get_users_telegram_ids
 from create_bot import three_xui_clients, bot
 from config import ADMINS
 
@@ -46,6 +46,9 @@ class AdminStates(StatesGroup):
     sub_info = State()
     client_uuid = State()
 
+class BroadcastState(StatesGroup):
+    msg = State()
+
 @admin_router.message(Command("admin"), F.from_user.id.in_(ADMINS))
 async def admin_panel(message: Message, state: FSMContext):
     await state.clear()
@@ -55,6 +58,31 @@ async def admin_panel(message: Message, state: FSMContext):
         parse_mode="HTML"
     )
     await state.set_state(AdminStates.wait_user_id)
+
+@admin_router.message(Command("broadcast"), F.from_user.id.in_(ADMINS))
+async def broadcast_start(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "🛠 <b>Рассылка сообщений</b>\n\n"
+        "Напишите сообщение, которое надо отправить:",
+        parse_mode="HTML"
+    )
+    await state.set_state(BroadcastState.msg)
+
+@admin_router.message(BroadcastState.msg, F.from_user.id.in_(ADMINS))
+async def broadcast(message: Message, session: AsyncSession, state: FSMContext):
+    ids = await get_users_telegram_ids(session)
+    await message.answer(text="ℹ️ Начинаем пересылать")
+    for _id in ids:
+        try:
+            if _id == message.from_user.id:
+                continue
+            await message.copy_to(chat_id=_id)
+        except Exception:
+            ...
+
+    await state.clear()
+    await message.answer(text="✅ Пересылка закончена")
 
 @admin_router.message(AdminStates.wait_user_id, F.from_user.id.in_(ADMINS))
 async def user_manage_menu(message: Message, session: AsyncSession, state: FSMContext):
@@ -72,7 +100,7 @@ async def user_manage_menu(message: Message, session: AsyncSession, state: FSMCo
         await state.clear()
         return await message.answer("❌ Ошибка: клиент не привязан к серверу")
 
-    sub_info = await server.get_client_stats(user.uuid)
+    sub_info = await server.get_client_stats(user.telegram_id)
 
     await state.update_data(
         target_id=target_id,
@@ -124,13 +152,13 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
 
     if "extend" in action and len(action.split("_")) > 1:
         add_days = action.split("_")[-1]
-        print(add_days)
         if add_days.isdigit():
             add_days = int(add_days)
         else:
             return
         result = await server.extend_client_subscription(
             client_uuid,
+            target_id,
             sub_info,
             add_days
         )
@@ -143,8 +171,8 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
             await call.answer("❌ Произошла ошибка", show_alert=True)
 
     elif action == "freeze":
-        state = not sub_info.enabled
-        success = await server.toggle_client_status(client_uuid, sub_info, state)
+        state = not sub_info.enable
+        success = await server.toggle_client_status(client_uuid, target_id, sub_info, state)
         if not success:
             await call.answer("❌ Произошла ошибка", show_alert=True)
             

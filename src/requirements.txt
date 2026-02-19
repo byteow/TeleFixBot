@@ -9,3 +9,5 @@ aiosend
 celery[redis]
 httpx
 httpx[http2]
+cachetools
+apscheduler

@@ -20,6 +20,11 @@ def buy_kb():
     kb.row(back_button)
     return kb.as_markup()
 
+def extend_sub_kb():
+    kb = InlineKeyboardBuilder()
+    kb.row(InlineKeyboardButton(text="💎 Продлить подписку", url=ADMIN_USERNAME))
+    return kb.as_markup()
+
 def to_main_kb():
     kb = InlineKeyboardBuilder()
     kb.row(back_button)

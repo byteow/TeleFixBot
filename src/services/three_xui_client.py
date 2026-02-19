@@ -12,12 +12,12 @@ class SubscribeInfo:
     inboundId: int
     enable: bool
     active: bool
-    email: str
     up: int
     down: int
     expiryTime: int
     total: int
     reset: int
+    tgId: int
 
 class ThreeXUIClient:
     def __init__(
@@ -32,7 +32,7 @@ class ThreeXUIClient:
             sid: str,
             pbk: str,
             model: Server
-        ):
+    ):
         self.base_url = f"http://{host}:{port}"
         self.login_data = {"username": login, "password": password}
         self.client = httpx.AsyncClient(timeout=10.0)
@@ -60,33 +60,54 @@ class ThreeXUIClient:
             return False
 
 
-    async def get_client_stats(self, uuid: str):
+    def _serialize_user(self, obj: dict) -> SubscribeInfo:
+        return SubscribeInfo(
+            id=obj['id'],
+            inboundId=obj['inboundId'],
+            enable=obj['enable'],
+            up=obj['up'],
+            down=obj['down'],
+            expiryTime=obj['expiryTime'],
+            active=obj['enable'] and (obj['expiryTime'] == 0 or obj['expiryTime'] > get_now_ms()),
+            total=obj['total'],
+            reset=obj['reset'],
+            tgId=int(obj['email'])
+        )
+
+
+    async def get_client_stats(self, telegram_id: int):
         try:
             response = await self.client.get(
-                f"{self.base_url}/panel/api/inbounds/getClientTraffics/{uuid}",
+                f"{self.base_url}/panel/api/inbounds/getClientTraffics/{telegram_id}",
                 cookies=self.cookie
             )
             data = response.json()
             if data.get("success") and data.get("obj"):
-                obj = data.get("obj")
-                return SubscribeInfo(
-                    id=obj['id'],
-                    inboundId=obj['inboundId'],
-                    enable=obj['enable'],
-                    email=obj['email'],
-                    up=obj['up'],
-                    down=obj['down'],
-                    expiryTime=obj['expiryTime'],
-                    active=obj['enable'] and (obj['expiryTime'] == 0 or obj['expiryTime'] > get_now_ms()),
-                    total=obj['total'],
-                    reset=obj['reset']
-                )
+                return self._serialize_user(data.get("obj"))
             return None
+        except Exception:
+            return None
+        
+    
+    async def get_all_clients_expiry(self):
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/panel/api/inbounds/list",
+                cookies=self.cookie
+            )
+            data = response.json()
+
+            if data.get("success") and data.get("obj"):
+                return list(map(lambda client: {
+                    "uuid": client.get("uuid"),
+                    "tgId": client.get("email"),
+                    "expiryTime": client.get("expiryTime")
+                }, data.get("obj")[0].get("clientStats")))
         except Exception:
             return None
 
 
-    async def add_client(self, limit_gb: int = 0, expiry_days: int = 30):
+    async def add_client(self, telegram_id: int, limit_gb: int = 0, expiry_days: int = 30):
         uuid_ = str(uuid.uuid4())
         expiry_time = int((datetime.utcnow().timestamp() + (expiry_days * 86400)) * 1000)
         limit_bytes = limit_gb * 1024 * 1024 * 1024 if limit_gb > 0 else 0
@@ -94,12 +115,12 @@ class ThreeXUIClient:
         client_settings = {
             "id": uuid_,
             "alterId": 0,
-            "email": uuid_,
+            "email": str(telegram_id),
             "limitIp": 0,
             "totalGB": limit_bytes,
             "expiryTime": expiry_time,
             "enable": True,
-            "tgId": "",
+            "tgId": telegram_id,
             "subId": ""
         }
         
@@ -119,10 +140,10 @@ class ThreeXUIClient:
             return None
         
     
-    async def extend_client_subscription(self, client_uuid: str, sub: SubscribeInfo, add_days: int):
+    async def extend_client_subscription(self, client_uuid: str, telegram_id: int, sub: SubscribeInfo, add_days: int):
         try:
             if not sub:
-                return await self.add_client(0, add_days)
+                return await self.add_client(telegram_id, 0, add_days)
 
             now_ms = int(datetime.utcnow().timestamp() * 1000)
   
@@ -132,7 +153,7 @@ class ThreeXUIClient:
             client_settings = {
                 "id": client_uuid,
                 "alterId": 0,
-                "email": sub.email,
+                "email": str(telegram_id),
                 "limitIp": 0,
                 "totalGB": sub.total,
                 "expiryTime": new_expiry,
@@ -156,12 +177,12 @@ class ThreeXUIClient:
             return False
         
     
-    async def toggle_client_status(self, client_uuid: str, sub: SubscribeInfo, enable: bool):
+    async def toggle_client_status(self, client_uuid: str, telegram_id: int, sub: SubscribeInfo, enable: bool):
         try:
             client_settings = {
                 "id": client_uuid,
                 "alterId": 0,
-                "email": sub.email,
+                "email": str(telegram_id),
                 "limitIp": 0,
                 "totalGB": sub.total,
                 "expiryTime": sub.expiryTime,
@@ -180,15 +201,16 @@ class ThreeXUIClient:
                 json=params,
                 cookies=self.cookie
             )
+
             return response.json().get("success", False)
         except Exception:
             return False
 
 
-    async def delete_client(self, uuid: str):
+    async def delete_client(self, client_uuid: str):
         try:
             response = await self.client.post(
-                f"{self.base_url}/panel/api/inbounds/{self.data["inbound_id"]}/delClient/{uuid}",
+                f"{self.base_url}/panel/api/inbounds/{self.data["inbound_id"]}/delClient/{client_uuid}",
                 cookies=self.cookie
             )
             return response.json().get("success", False)

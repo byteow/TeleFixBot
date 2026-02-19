@@ -118,13 +118,11 @@ async def about_subscribe(call: types.CallbackQuery, user: User, server_data: di
     kb = to_main_kb()
 
     if sub_info and sub_info.active:
-        total_gb = round(sub_info.total / (1024 ** 3), 2)
         text = (
             "**ℹ️ О подписке**\n\n"
             f"🆔 UUID: `{user.uuid}`\n"
             f"🖥 Сервер: {server_data.get("host")}\n"
             f"📅 Активна до: {ms_to_datetime(sub_info.expiryTime)}\n"
-            f"💿 Объем отправленных данных: {total_gb} ГБ\n"
             f"✅ Статус: Активна\n\n"
         )
 

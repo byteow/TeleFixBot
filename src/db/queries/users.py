@@ -68,3 +68,10 @@ async def delete_user(
     query = delete(User).where(User.telegram_id == telegram_id)
     await session.execute(query)
     await session.commit()
+
+async def get_users_telegram_ids(
+    session: AsyncSession
+):
+    query = select(User.telegram_id)
+    result = await session.execute(query)
+    return result.scalars().all()
