@@ -1,10 +1,12 @@
 import httpx
 import json
 import uuid
+import asyncio
 from datetime import datetime
 from db import Server
 from dataclasses import dataclass
 from utils import get_now_ms
+from constants import MAX_LOADING_SCORE
 
 @dataclass
 class SubscribeInfo:
@@ -21,17 +23,17 @@ class SubscribeInfo:
 
 class ThreeXUIClient:
     def __init__(
-            self, 
-            inbound_id: int, 
-            server_id: int, 
-            host: str, 
-            port: int, 
-            login: str,
-            password: str,
-            sni: str,
-            sid: str,
-            pbk: str,
-            model: Server
+        self, 
+        inbound_id: int, 
+        server_id: int, 
+        host: str, 
+        port: int, 
+        login: str,
+        password: str,
+        sni: str,
+        sid: str,
+        pbk: str,
+        model: Server
     ):
         self.base_url = f"http://{host}:{port}"
         self.login_data = {"username": login, "password": password}
@@ -47,6 +49,11 @@ class ThreeXUIClient:
             "pbk": pbk
         }
         self.model = model
+        self.loading_score = MAX_LOADING_SCORE
+
+
+    def start_check_thread(self):
+        asyncio.create_task(self.stats_check())
 
 
     async def login(self) -> bool:
@@ -58,6 +65,34 @@ class ThreeXUIClient:
             return False
         except Exception:
             return False
+        
+    
+    async def get_loading_stats(self):
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/panel/api/server/status",
+                timeout=3.0
+            )
+            if response.status_code == 200:
+                result: dict = response.json()["obj"]
+                return result
+            return None
+        except Exception:
+            return None
+
+
+    async def stats_check(self):
+        while 1:
+            data = await self.get_loading_stats()
+            if data:
+                online = data.get("tcpCount") + data.get("udpCount")
+                cores = data.get("cpuCores")
+                cpu = data.get("cpu")
+                self.loading_score = round(((online * 10) + (cpu * 2)) / cores, 2)
+            else:
+                self.loading_score = MAX_LOADING_SCORE
+        
+            await asyncio.sleep(30)
 
 
     def _serialize_user(self, obj: dict) -> SubscribeInfo:

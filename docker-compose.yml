@@ -28,6 +28,8 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - PYTHONPATH=/app:/app/src
+    volumes:
+      - .:/app
     command: >
        sh -c "alembic -c alembic.ini upgrade head && python src/aiogram_run.py"
     env_file:

@@ -1,12 +1,28 @@
 from typing import Any, Awaitable, Callable, Dict
-from aiogram import BaseMiddleware
+from aiogram import BaseMiddleware, Bot
 from aiogram.types import TelegramObject
 from db import get_user_by_tg_id, create_user
-from services import ThreeXUIClient
-from create_bot import get_random_server, three_xui_clients
+from create_bot import get_server, get_server_by_id
 from cachetools import TTLCache
+from services import ThreeXUIClient
+from constants import MAX_LOADING_SCORE
 
 stats_cache = TTLCache(maxsize=1000, ttl=300)
+
+async def check_server(telegram_id: int, bot: Bot, server: ThreeXUIClient | None):
+    if server and server.loading_score < MAX_LOADING_SCORE:
+        return True
+    
+    await bot.send_message(
+        chat_id=telegram_id, 
+        text=(
+            "⚠️ <b>Внимание! Не удаётся продолжить так как Ваш сервер перегружен или не отвечает.</b>\n\n"
+            "<b>Попробуйте повторить попытку позже.</b>"
+        ),
+        parse_mode="HTML"
+    )
+    return False
+
 
 class RegistrationMiddleware(BaseMiddleware):
     async def __call__(
@@ -26,9 +42,13 @@ class RegistrationMiddleware(BaseMiddleware):
         user = await get_user_by_tg_id(session, user_id)
         
         if not user:
-            server: ThreeXUIClient | None = get_random_server()
+            server = get_server()
             server_id = None
             uuid = None
+
+            success = await check_server(user_id, data['bot'], server)
+            if not success:
+                return
 
             if server:
                 server_id = server.data["server_id"]
@@ -43,7 +63,11 @@ class RegistrationMiddleware(BaseMiddleware):
             user.server = None if not server.model else server.model
             is_reg = True
 
-        server = three_xui_clients[user.server_id]
+        server = get_server_by_id(user.server_id)
+        success = await check_server(user_id, data['bot'], server)
+        if not success:
+            return
+        
         if user_id in stats_cache:
             sub_info = stats_cache[user_id]
         else:

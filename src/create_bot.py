@@ -32,10 +32,20 @@ async def set_servers():
                 server.pbk,
                 server
             )
+
             result = await client.login()
             if not result: continue
+            client.start_check_thread()
             three_xui_clients[server.id] = client
 
-def get_random_server():
-    random_id = list(three_xui_clients.keys())[random.randint(0, len(three_xui_clients.items())-1)]
-    return three_xui_clients.get(random_id)
+def get_server() -> ThreeXUIClient | None:
+    servers = list(three_xui_clients.values())
+    if not servers:
+        return None
+    return min(servers, lambda s: s.loading_score)
+
+def get_server_by_id(id: int) -> ThreeXUIClient | None:
+    try:
+        return three_xui_clients.get(id)
+    except KeyError:
+        return None
