@@ -5,56 +5,41 @@ services:
     restart: always 
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_DB: goofishparser
+      POSTGRES_DB: telefix
       POSTGRES_PASSWORD: 123456
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - main
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d telefix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build:
-      context: ./src
+      context: .
       dockerfile: Dockerfile
+    restart: always
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      - PYTHONPATH=/app:/app/src
     command: >
-      sh -c "alembic upgrade head && python aiogram_run.py"
+       sh -c "alembic -c alembic.ini upgrade head && python src/aiogram_run.py"
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
-    networks:
-      - main
-
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: always
-    networks:
-      - main
-
-  celery_worker:
-    build:
-      context: ./src
-      dockerfile: ../Dockerfile
-    command: celery -A celery_worker.worker worker --loglevel=info
-    env_file:
-      - .env
-    depends_on:
-      - redis
+      db:
+        condition: service_healthy
     networks:
       - main
 
 volumes:
-  redis_data:
   postgres_data:
+
 networks:
   main:

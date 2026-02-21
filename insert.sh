@@ -1,0 +1,1 @@
+sudo docker exec -i postgres_db pg_dump -U postgres telefix > servers.sql

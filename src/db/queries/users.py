@@ -19,11 +19,22 @@ async def create_user(
     await session.refresh(new_user)
     return new_user
 
+async def get_user_server_id(
+    session: AsyncSession,
+    telegram_id: int
+):
+    query = select(User.server_id)\
+        .where(User.telegram_id == telegram_id)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
 async def get_user_by_tg_id(
     session: AsyncSession, 
     telegram_id: int
 ):
-    query = select(User).where(User.telegram_id == telegram_id).options(joinedload(User.server))
+    query = select(User)\
+        .where(User.telegram_id == telegram_id)\
+            .options(joinedload(User.server))
     result = await session.execute(query)
     return result.scalar_one_or_none()
 

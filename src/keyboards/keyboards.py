@@ -11,7 +11,10 @@ def main_menu():
         InlineKeyboardButton(text="ℹ️ О подписке", callback_data="about_subscribe"),
         InlineKeyboardButton(text="📥 Софт", callback_data="download")
     )
-    kb.row(InlineKeyboardButton(text="💳 Купить или продлить подписку", callback_data="buy"))
+    kb.row(
+        InlineKeyboardButton(text="🤝 Рефералы", callback_data="referrals"),
+        InlineKeyboardButton(text="💳 Оплата", callback_data="buy")
+    )
     return kb.as_markup()
 
 def buy_kb():

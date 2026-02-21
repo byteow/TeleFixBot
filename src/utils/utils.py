@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from config import BOT_USERNAME
 
 def get_utc_time(datetime: datetime):
     return datetime.strftime("%d %b %Y, %H:%M UTC")
@@ -26,6 +27,9 @@ def generate_vless_link(server_data: dict, uuid: str):
     remark = "Access_Granted" 
     
     return f"vless://{uuid}@{host}:{port}?{params_str}#{remark}"
+
+def generate_referral_link(telegram_id: int):
+    return f"https://t.me/{BOT_USERNAME}?start=referral_{telegram_id}"
 
 def bytes_to_gb(b):
     return round(b / (1024**3), 2)

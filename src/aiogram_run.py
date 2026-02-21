@@ -56,7 +56,7 @@ async def check_subscriptions():
                     await bot.send_message(tg_id, text, parse_mode='HTML')
                 except Exception:
                     pass
-
+# telefixbot-app-1
 async def main():
     await set_servers()
 
