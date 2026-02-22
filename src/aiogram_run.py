@@ -1,5 +1,6 @@
 import asyncio
-from create_bot import dp, bot, set_servers, three_xui_clients
+from create_bot import dp, bot
+from services import three_xui_clients, set_servers
 from routers import user_router, admin_router
 from middlewares import DatabaseSessionMiddleware, RegistrationMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -56,7 +57,7 @@ async def check_subscriptions():
                     await bot.send_message(tg_id, text, parse_mode='HTML')
                 except Exception:
                     pass
-# telefixbot-app-1
+
 async def main():
     await set_servers()
 

@@ -5,9 +5,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import bytes_to_gb, ms_to_datetime
+from services import get_server_by_id
 from db import get_user_by_tg_id, update_user_uuid, get_users_telegram_ids
-from create_bot import three_xui_clients, bot
+from create_bot import bot
 from config import ADMINS
+from middlewares import stats_cache
 
 async def notify_renewed(chat_id: int, add_days: int):
     text = (
@@ -95,7 +97,7 @@ async def user_manage_menu(message: Message, session: AsyncSession, state: FSMCo
         await state.clear()
         return await message.answer("❌ Пользователь не найден")
     
-    server = three_xui_clients.get(user.server_id)
+    server = get_server_by_id(user.server_id)
     if not server:
         await state.clear()
         return await message.answer("❌ Ошибка: клиент не привязан к серверу")
@@ -110,6 +112,7 @@ async def user_manage_menu(message: Message, session: AsyncSession, state: FSMCo
     )
     
     kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="➕ Продлить (24 часа)", callback_data="adm_extend_1")],
         [InlineKeyboardButton(text="➕ Продлить (1 мес)", callback_data="adm_extend_30")],
         [InlineKeyboardButton(text="➕ Продлить (3 мес)", callback_data="adm_extend_90")],
         [InlineKeyboardButton(text="➕ Продлить (6 мес)", callback_data="adm_extend_180")],
@@ -154,6 +157,8 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
         add_days = action.split("_")[-1]
         if add_days.isdigit():
             add_days = int(add_days)
+            if add_days <= 0 or add_days > 180:
+                return
         else:
             return
         result = await server.extend_client_subscription(
@@ -167,6 +172,7 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
         if result:
             await call.answer(f"✅ Пользователю добавлено {add_days} дней подписки", show_alert=True)
             await notify_renewed(target_id, add_days)
+            stats_cache.pop(target_id)
         else:
             await call.answer("❌ Произошла ошибка", show_alert=True)
 
@@ -182,6 +188,7 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
         else:
             await call.answer("❄️ Подписка разморожена", show_alert=True)
             await notify_unfrozen(target_id)
+        stats_cache.pop(target_id)
 
     elif action == "delete":
         success = await server.delete_client(client_uuid)
@@ -192,6 +199,7 @@ async def process_admin_action(call: CallbackQuery, session: AsyncSession, state
         await call.answer("🗑 Подписка полностью удалена", show_alert=True)
         await call.message.edit_text("❌ Подписка удалена")
         await notify_deleted(target_id)
+        stats_cache.pop(target_id)
         return
 
     elif action == "back":

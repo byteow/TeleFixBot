@@ -24,7 +24,7 @@ def generate_vless_link(server_data: dict, uuid: str):
     }
 
     params_str = "&".join([f"{k}={v}" for k, v in params.items() if v])
-    remark = "Access_Granted" 
+    remark = "TeleFix" 
     
     return f"vless://{uuid}@{host}:{port}?{params_str}#{remark}"
 

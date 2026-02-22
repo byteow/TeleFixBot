@@ -2,9 +2,8 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware, Bot
 from aiogram.types import TelegramObject
 from db import get_user_by_tg_id, create_user
-from create_bot import get_server, get_server_by_id
 from cachetools import TTLCache
-from services import ThreeXUIClient
+from services import ThreeXUIClient, get_server, get_server_by_id
 from constants import MAX_LOADING_SCORE
 
 stats_cache = TTLCache(maxsize=1000, ttl=300)
@@ -22,7 +21,6 @@ async def check_server(telegram_id: int, bot: Bot, server: ThreeXUIClient | None
         parse_mode="HTML"
     )
     return False
-
 
 class RegistrationMiddleware(BaseMiddleware):
     async def __call__(
@@ -67,7 +65,7 @@ class RegistrationMiddleware(BaseMiddleware):
         success = await check_server(user_id, data['bot'], server)
         if not success:
             return
-        
+
         if user_id in stats_cache:
             sub_info = stats_cache[user_id]
         else:

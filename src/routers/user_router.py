@@ -1,7 +1,7 @@
 from aiogram import types, F, Router
 from aiogram.filters import Command, CommandObject
-from aiogram.types import Message, InputMediaPhoto
-from services import SubscribeInfo
+from aiogram.types import InputMediaPhoto
+from services import SubscribeInfo, get_server_by_id
 from db import (
     User, 
     get_referrals_count, 
@@ -15,7 +15,7 @@ from utils import (
     generate_vless_link, 
     generate_referral_link
 )
-from create_bot import bot, three_xui_clients
+from create_bot import bot
 from constants import (
     logo_photo, 
     virus_total_photo
@@ -30,12 +30,12 @@ from keyboards import main_menu, to_main_kb, buy_kb
 
 user_router = Router(name="user_router")
 
-def get_main_text(message: Message, is_reg: bool, sub_info: SubscribeInfo | None):
+def get_main_text(is_reg: bool, sub_info: SubscribeInfo | None):
     text = (
         "🔴 <b>ДОСТУП ОГРАНИЧЕН</b>\n\n"
         "Твоя подписка истекла или еще не была активирована. 🛑\n"
         "Трафик: <b>0 MB</b> ❌\n"
-        "Статус: <code>Отключено<\code> 🔌\n\n"
+        "Статус: <code>Отключено</code> 🔌\n\n"
         "Чтобы продолжить пользоваться быстрым интернетом без границ, "
         "продли доступ в разделе <b>«Купить подписку»</b>."
     )
@@ -64,9 +64,9 @@ def get_payment_text(no_sub: bool):
     title = "На данный момент на вашем аккаунте нет активной подписки" if no_sub else "ОПЛАТА"
     text = (
         f"💳 <b>{title}</b>\n\n"
-        "<b>• 1 месяц — 100₽</b>\n"
-        "<b>• 3 месяца — 250₽</b>\n"
-        "<b>• 3 месяца — 450₽</b>\n\n"
+        "<b>• 1 месяц   — 100₽</b>\n"
+        "<b>• 3 месяца  — 250₽</b>\n"
+        "<b>• 6 месяцев — 450₽</b>\n\n"
         "⚠️ Сейчас оплата только через админа."
     )
     return text
@@ -87,7 +87,7 @@ async def start(message: types.Message, session: AsyncSession, command: CommandO
                             referrer_id,
                             message.from_user.id
                         )
-                        server = three_xui_clients.get(referrer.server_id)
+                        server = get_server_by_id(referrer.server_id)
                         if server:
                             sub_info = await server.get_client_stats(referrer.telegram_id)
                             success = await server.extend_client_subscription(
@@ -111,7 +111,7 @@ async def start(message: types.Message, session: AsyncSession, command: CommandO
     
     await bot.send_photo(
         chat_id=message.from_user.id,
-        caption=get_main_text(message, is_reg, sub_info), 
+        caption=get_main_text(is_reg, sub_info), 
         photo=logo_photo,
         parse_mode="HTML", 
         reply_markup=main_menu()
@@ -204,7 +204,7 @@ async def buy(call: types.CallbackQuery):
 async def to_main(call: types.CallbackQuery, is_reg: bool, sub_info: SubscribeInfo | None):
     new_media = InputMediaPhoto(
         media=logo_photo, 
-        caption=get_main_text(call.message, is_reg, sub_info),
+        caption=get_main_text(is_reg, sub_info),
         parse_mode="HTML",
     )
     await call.message.edit_media(
