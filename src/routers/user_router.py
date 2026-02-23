@@ -32,31 +32,30 @@ user_router = Router(name="user_router")
 
 def get_main_text(is_reg: bool, sub_info: SubscribeInfo | None):
     text = (
-        "🔴 <b>ДОСТУП ОГРАНИЧЕН</b>\n\n"
-        "Твоя подписка истекла или еще не была активирована. 🛑\n"
-        "Трафик: <b>0 MB</b> ❌\n"
-        "Статус: <code>Отключено</code> 🔌\n\n"
-        "Чтобы продолжить пользоваться быстрым интернетом без границ, "
-        "продли доступ в разделе <b>«Купить подписку»</b>."
+        "🔴 <b>СКОРОСТЬ ОГРАНИЧЕНА</b>\n\n"
+        "Ваш персональный доступ не активен. 🛑\n"
+        "Статус: <code>Базовый режим</code> 🔌\n\n"
+        "Чтобы вернуть моментальную загрузку видео и фото в Telegram, "
+        "выберите подходящий вариант в разделе <b>«Выбрать тариф»</b>."
     )
 
     if sub_info and sub_info.active:
         end_date = ms_to_datetime(sub_info.expiryTime)
         if is_reg:
             text = (
-                f"🎁 <b>ТРИАЛ АКТИВИРОВАН!</b>\n\n"
-                f"Тебе выдано <b>24 часа</b> бесплатного доступа.\n"
-                f"Трафик: <b>Безлимит</b> ♾\n"
-                f"Истекает: <code>Завтра</code>\n\n"
-                "Жми на кнопку ниже, забирай ссылку и вставляй в приложение."
+                f"🎁 <b>ТЕСТОВЫЙ ПЕРИОД АКТИВИРОВАН!</b>\n\n"
+                f"Вам выдано <b>24 часа</b> ускоренного доступа для Telegram.\n"
+                f"Трафик: <b>Без ограничений</b> ♾\n"
+                f"Действует до: <code>Завтра</code>\n\n"
+                "Скопируйте ключ ниже и добавьте его в наше приложение."
             )
         else:
             text = (
-                f"👋 <b>С возвращением!</b>\n\n"
-                f"🔒 <b>Твой доступ:</b> <code>Активен</code> ✅\n"
-                f"📅 <b>Истекает:</b> <code>{end_date}</code>\n\n"
-                "Обход работает в штатном режиме. "
-                "Если нужно обновить настройки или скачать софт — воспользуйся кнопками ниже. 👇"
+                f"👋 <b>Рады видеть вас снова!</b>\n\n"
+                f"🔒 <b>Ваш статус:</b> <code>Турбо-режим активен</code> ✅\n"
+                f"📅 <b>Действует до:</b> <code>{end_date}</code>\n\n"
+                "Связь работает в штатном режиме. "
+                "Используйте кнопки ниже для настройки или скачивания софта. 👇"
             )
     return text
 
@@ -120,18 +119,18 @@ async def start(message: types.Message, session: AsyncSession, command: CommandO
 @user_router.callback_query(F.data == "download")
 async def download(call: types.CallbackQuery):
     text = (
-        "<b>🚀 Наше фирменное приложение</b>\n\n"
-        "Пользуйтесь Telegram без границ с помощью нашего клиента. "
-        "Мы сделали его максимально легким и быстрым.\n\n"
-        "<b>📥 Скачать для своей ОС:</b>\n"
+        "<b>📱 Наше приложение для стабильной связи</b>\n\n"
+        "Пользуйтесь Telegram с максимальным комфортом. "
+        "Мы оптимизировали маршруты, чтобы медиа и файлы грузились мгновенно.\n\n"
+        "<b>📥 Скачать для своей системы:</b>\n"
         f"└ <a href='{SOFT_WIN_LINK}'>Windows</a> | "
         f" <a href='{SOFT_MAC_LINK}'>macOS</a> | "
         f" <a href='{SOFT_LINUX_LINK}'>Linux</a>\n\n"
-        "<b>🛡 Безопасность превыше всего:</b>\n"
-        "Приложение полностью чистое. Мы дорожим своей репутацией, поэтому "
-        "каждая сборка проходит автоматическую проверку.\n"
-        f"✅ <b><a href='{VIRUS_TOTAL_LINK}'>Посмотреть отчет VirusTotal</a></b>\n\n"
-        "<i>🦾 Никаких скрытых майнеров или вирусов — только чистый код для вашего обхода.</i>"
+        "<b>🛡 Безопасность данных:</b>\n"
+        "Приложение использует современные протоколы шифрования. "
+        "Ваша конфиденциальность — наш главный приоритет.\n"
+        f"✅ <b><a href='{VIRUS_TOTAL_LINK}'>Отчет безопасности (VirusTotal)</a></b>\n\n"
+        "<i>🦾 Стабильный доступ к любимым чатам 24/7.</i>"
     )
 
     new_media = InputMediaPhoto(
@@ -153,10 +152,10 @@ async def send_link(call: types.CallbackQuery, server_data: dict, user: User, su
     if sub_info and sub_info.active:
         link = generate_vless_link(server_data, user.uuid)
         text = (
-            "🔗 <b>Твоя ссылка для приложения:</b>\n\n"
+            "🚀 <b>Твой ключ для ускорения Telegram:</b>\n\n"
             f"<code>{link}</code>\n\n"
-            "👆 <b>Нажми, чтобы скопировать.</b>\n"
-            "Вставь её в софт и нажми <b>«Включить»</b>."
+            "👆 <b>Нажми на код, чтобы скопировать.</b>\n"
+            "Нажми на <b>«+»</b> в нашем приложении, вставь ключ и кликни на кнопку <b>«Добавить»</b>."
         )
         kb = to_main_kb()
     await call.message.edit_caption(caption=text, parse_mode="HTML", reply_markup=kb)
@@ -187,11 +186,12 @@ async def about_subscribe(call: types.CallbackQuery, user: User, server_data: di
 
     if sub_info and sub_info.active:
         text = (
-            "<b>ℹ️ О подписке</b>\n\n"
-            f"🆔 UUID: <code>{user.uuid}</code>\n"
-            f"🖥 Сервер: {server_data.get("host")}\n"
-            f"📅 Активна до: <code>{ms_to_datetime(sub_info.expiryTime)}</code>\n"
-            f"✅ Статус: <code>Активна</code>\n\n"
+            "<b>ℹ️ Информация о доступе</b>\n\n"
+            f"🆔 Ваш ID: <code>{user.uuid}</code>\n"
+            f"🖥 Узел связи: {server_data.get('host')}\n"
+            f"📅 Действует до: <code>{ms_to_datetime(sub_info.expiryTime)}</code>\n"
+            f"✅ Состояние: <code>Активно</code>\n\n"
+            "<i>Все системы работают в штатном режиме.</i>"
         )
 
     await call.message.edit_caption(caption=text, parse_mode="HTML", reply_markup=kb)

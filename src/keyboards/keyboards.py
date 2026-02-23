@@ -6,14 +6,14 @@ back_button = InlineKeyboardButton(text="⬅️ Назад", callback_data="to_m
 
 def main_menu():
     kb = InlineKeyboardBuilder()
-    kb.row(InlineKeyboardButton(text="🚀 ПОДКЛЮЧИТЬ ОБХОД", callback_data="get_link"))
+    kb.row(InlineKeyboardButton(text="🚀 ПОДКЛЮЧИТЬ УСКОРЕНИЕ", callback_data="get_link"))
     kb.row(
-        InlineKeyboardButton(text="ℹ️ О подписке", callback_data="about_subscribe"),
+        InlineKeyboardButton(text="ℹ️ Мой статус", callback_data="about_subscribe"),
         InlineKeyboardButton(text="📥 Софт", callback_data="download")
     )
     kb.row(
         InlineKeyboardButton(text="🤝 Рефералы", callback_data="referrals"),
-        InlineKeyboardButton(text="💳 Оплата", callback_data="buy")
+        InlineKeyboardButton(text="💳 Выбор тарифа", callback_data="buy")
     )
     return kb.as_markup()
 
