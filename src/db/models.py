@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, BigInteger, DateTime, ForeignKey, String
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import datetime, timezone
+from constants import DEFAULT_REALITY_PORT
 
 Base = declarative_base()
 
@@ -40,6 +41,8 @@ class Server(Base):
     
     host = Column(String, nullable=False)
     port = Column(Integer, nullable=False)
+    reality_port = Column(Integer, default=DEFAULT_REALITY_PORT)
+    endpoint = Column(String, default="/")
     login = Column(String, nullable=False)
     password = Column(String, nullable=False)
     

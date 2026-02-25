@@ -8,3 +8,4 @@ logo_photo = FSInputFile(logo_photo_path)
 virus_total_photo = FSInputFile(virus_total_scan_path)
 
 MAX_LOADING_SCORE = 999999
+DEFAULT_REALITY_PORT = 443

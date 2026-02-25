@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from config import BOT_USERNAME
+from db import Server
 
 def get_utc_time(datetime: datetime):
     return datetime.strftime("%d %b %Y, %H:%M UTC")
@@ -8,17 +9,17 @@ def ms_to_datetime(ms: int):
     dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
     return dt.strftime("%H:%M %d.%m.%Y UTC")
 
-def generate_vless_link(server_data: dict, uuid: str):
-    host = server_data['host']
-    port = 443
+def generate_vless_link(server_data: Server, uuid: str):
+    host = server_data.host
+    port = server_data.reality_port
     
     params = {
         "encryption": "none",
         "security": "reality",
-        "sni": server_data['sni'],
-        "fp": "chrome",     
-        "pbk": server_data['pbk'],
-        "sid": server_data['sid'],
+        "sni": server_data.sni,
+        "fp": "firefox",     
+        "pbk": server_data.pbk,
+        "sid": server_data.sid,
         "type": "tcp",      
         "flow": "xtls-rprx-vision"
     }

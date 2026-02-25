@@ -49,7 +49,7 @@ class RegistrationMiddleware(BaseMiddleware):
                 return
 
             if server:
-                server_id = server.data["server_id"]
+                server_id = server.model.id
                 uuid = await server.add_client(user_id, 0, 1)
 
             user = await create_user(
@@ -75,6 +75,6 @@ class RegistrationMiddleware(BaseMiddleware):
         data['user'] = user
         data['is_reg'] = is_reg
         data['sub_info'] = sub_info
-        data['server_data'] = server.data
+        data['server_data'] = server.model
 
         return await handler(event, data)

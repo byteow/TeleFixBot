@@ -126,7 +126,7 @@ async def user_manage_menu(message: Message, session: AsyncSession, state: FSMCo
         sub_text = (
             f"📈 Трафик: {bytes_to_gb(sub_info.total)} ГБ\n"
             f"🆔 UUID: {user.uuid}\n"
-            f"🖥 Сервер: {server.data.get('host')}\n"
+            f"🖥 Сервер: {server.model.host}\n"
             f"⏳ Срок: до {ms_to_datetime(sub_info.expiryTime)}\n"
             f"✅ Статус: {"Активна" if sub_info.active else "Неактивна"}"
         )

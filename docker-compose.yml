@@ -31,7 +31,7 @@ services:
     volumes:
       - .:/app
     command: >
-       sh -c "alembic -c alembic.ini upgrade head && python src/aiogram_run.py"
+       sh -c "python src/aiogram_run.py"
     env_file:
       - .env
     depends_on:

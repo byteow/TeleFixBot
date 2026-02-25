@@ -4,6 +4,7 @@ from aiogram.types import InputMediaPhoto
 from services import SubscribeInfo, get_server_by_id
 from db import (
     User, 
+    Server,
     get_referrals_count, 
     get_referral, 
     create_referral,
@@ -146,7 +147,7 @@ async def download(call: types.CallbackQuery):
     await call.answer()
 
 @user_router.callback_query(F.data == "get_link")
-async def send_link(call: types.CallbackQuery, server_data: dict, user: User, sub_info: SubscribeInfo | None):
+async def send_link(call: types.CallbackQuery, server_data: Server, user: User, sub_info: SubscribeInfo | None):
     text = get_payment_text(True)
     kb = buy_kb()
     if sub_info and sub_info.active:
@@ -180,7 +181,7 @@ async def referrals(call: types.CallbackQuery, user: User, session: AsyncSession
     )
 
 @user_router.callback_query(F.data == "about_subscribe")
-async def about_subscribe(call: types.CallbackQuery, user: User, server_data: dict, sub_info: SubscribeInfo | None):
+async def about_subscribe(call: types.CallbackQuery, user: User, server_data: Server, sub_info: SubscribeInfo | None):
     text = get_payment_text(True)
     kb = to_main_kb()
 
@@ -188,7 +189,7 @@ async def about_subscribe(call: types.CallbackQuery, user: User, server_data: di
         text = (
             "<b>ℹ️ Информация о доступе</b>\n\n"
             f"🆔 Ваш ID: <code>{user.uuid}</code>\n"
-            f"🖥 Узел связи: {server_data.get('host')}\n"
+            f"🖥 Узел связи: {server_data.host}\n"
             f"📅 Действует до: <code>{ms_to_datetime(sub_info.expiryTime)}</code>\n"
             f"✅ Состояние: <code>Активно</code>\n\n"
             "<i>Все системы работают в штатном режиме.</i>"

@@ -7,19 +7,7 @@ async def set_servers():
     async with AsyncSessionLocal() as session:
         servers = await get_servers(session)
         for server in servers:
-            client = ThreeXUIClient(
-                server.inbound_id,
-                server.id, 
-                server.host, 
-                server.port, 
-                server.login, 
-                server.password,
-                server.sni,
-                server.sid,
-                server.pbk,
-                server
-            )
-
+            client = ThreeXUIClient(server)
             result = await client.login()
             if not result: continue
             client.start_check_thread()

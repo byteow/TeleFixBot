@@ -22,32 +22,15 @@ class SubscribeInfo:
     tgId: int
 
 class ThreeXUIClient:
-    def __init__(
-        self, 
-        inbound_id: int, 
-        server_id: int, 
-        host: str, 
-        port: int, 
-        login: str,
-        password: str,
-        sni: str,
-        sid: str,
-        pbk: str,
-        model: Server
-    ):
-        self.base_url = f"http://{host}:{port}"
-        self.login_data = {"username": login, "password": password}
-        self.client = httpx.AsyncClient(timeout=10.0)
-        self.cookie = None
-        self.data = {
-            "host": host,
-            "port": port,
-            "inbound_id": inbound_id,
-            "server_id": server_id,
-            "sni": sni,
-            "sid": sid,
-            "pbk": pbk
+    def __init__(self, model: Server):
+        self.endpoint = model.endpoint if model.endpoint.startswith("/") else f"/{model.endpoint}"
+        self.base_url = f"https://{model.host}:{model.port}{self.endpoint}"
+        self.login_data = {
+            "username": model.login, 
+            "password": model.password
         }
+        self.client = httpx.AsyncClient(timeout=10.0, verify=False)
+        self.cookie = None
         self.model = model
         self.loading_score = MAX_LOADING_SCORE
 
@@ -156,11 +139,12 @@ class ThreeXUIClient:
             "expiryTime": expiry_time,
             "enable": True,
             "tgId": telegram_id,
-            "subId": ""
+            "subId": "",
+            "flow": "xtls-rprx-vision"
         }
         
         params = {
-            "id": self.data["inbound_id"],
+            "id": self.model.inbound_id,
             "settings": json.dumps({"clients": [client_settings]})
         }
         
@@ -198,7 +182,7 @@ class ThreeXUIClient:
             }
 
             params = {
-                "id": self.data["inbound_id"],
+                "id": self.model.inbound_id,
                 "settings": json.dumps({"clients": [client_settings]})
             }
 
@@ -227,7 +211,7 @@ class ThreeXUIClient:
             }
 
             params = {
-                "id": self.data["inbound_id"],
+                "id": self.model.inbound_id,
                 "settings": json.dumps({"clients": [client_settings]})
             }
 
@@ -245,7 +229,7 @@ class ThreeXUIClient:
     async def delete_client(self, client_uuid: str):
         try:
             response = await self.client.post(
-                f"{self.base_url}/panel/api/inbounds/{self.data["inbound_id"]}/delClient/{client_uuid}",
+                f"{self.base_url}/panel/api/inbounds/{self.model.inbound_id}/delClient/{client_uuid}",
                 cookies=self.cookie
             )
             return response.json().get("success", False)
