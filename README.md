@@ -127,4 +127,4 @@ python -m src.bot
 **byteow** — Full Stack Developer (Python / React)
 
 - GitHub: [@byteow](https://github.com/byteow)
-- Telegram: [@warfenow](https://t.me/warfenow)
+- Telegram: [@warfenow](https://t.me/artembyteow)
